@@ -328,5 +328,6 @@ The registration form showcases real-time two-way binding:
 ---
 
 Built with ❤️ using Blazor best practices for scalable, maintainable event management.
-#   E v e n t E a s e A p p  
+#   E v e n t E a s e A p p 
+ 
  
