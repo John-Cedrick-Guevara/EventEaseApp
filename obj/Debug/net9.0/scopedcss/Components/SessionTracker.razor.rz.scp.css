@@ -1,0 +1,50 @@
+.session-tracker[b-1wjehhssdp] {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.session-info[b-1wjehhssdp] {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.session-label[b-1wjehhssdp] {
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.session-data[b-1wjehhssdp] {
+    font-size: 0.85rem;
+    opacity: 0.9;
+}
+
+.user-info[b-1wjehhssdp] {
+    display: flex;
+    align-items: center;
+}
+
+.user-badge[b-1wjehhssdp] {
+    background: rgba(255, 255, 255, 0.2);
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+@media (max-width: 768px) {
+    .session-tracker[b-1wjehhssdp] {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}

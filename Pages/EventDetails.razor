@@ -1,0 +1,107 @@
+@page "/events/{EventId:int}"
+@inject EventService EventService
+@inject UserSessionService SessionService
+@inject NavigationManager Navigation
+
+<PageTitle>@(selectedEvent?.Name ?? "Event Details")</PageTitle>
+
+<div class="event-details-container">
+  @if (selectedEvent == null)
+  {
+    <div class="not-found">
+      <h2>Event Not Found</h2>
+      <p>The event you're looking for doesn't exist.</p>
+      <button class="btn btn-primary" @onclick="NavigateToEvents">Back to Events</button>
+    </div>
+  }
+  else
+  {
+    <div class="event-details-header">
+      <button class="btn-back" @onclick="NavigateToEvents">
+        <span>←</span> Back to Events
+      </button>
+    </div>
+
+    <div class="event-details-card">
+      <div class="event-hero">
+        <div class="event-hero-content">
+          <h1 class="event-title">@selectedEvent.Name</h1>
+          <div class="event-meta">
+            <div class="meta-item">
+              <span class="icon">📅</span>
+              <span>@selectedEvent.Date.ToString("dddd, MMMM dd, yyyy")</span>
+            </div>
+            <div class="meta-item">
+              <span class="icon">🕐</span>
+              <span>@selectedEvent.Date.ToString("hh:mm tt")</span>
+            </div>
+            <div class="meta-item">
+              <span class="icon">📍</span>
+              <span>@selectedEvent.Location</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="event-content">
+        <div class="event-description">
+          <h2>About This Event</h2>
+          <p>@selectedEvent.Description</p>
+        </div>
+
+        <div class="event-stats">
+          <div class="stat-card">
+            <div class="stat-number">@registrationCount</div>
+            <div class="stat-label">Registered Attendees</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number">@daysUntilEvent</div>
+            <div class="stat-label">Days Until Event</div>
+          </div>
+        </div>
+
+        <div class="event-actions">
+          <button class="btn btn-primary btn-lg" @onclick="NavigateToRegistration">
+            Register for This Event
+          </button>
+        </div>
+
+        <!-- Attendee List Component -->
+        <AttendeeList EventId="@EventId" ShowCheckInButton="false" />
+      </div>
+    </div>
+  }
+</div>
+
+@code {
+  [Parameter]
+  public int EventId { get; set; }
+
+  private Event? selectedEvent;
+  private int registrationCount;
+  private int daysUntilEvent;
+
+  protected override void OnInitialized()
+  {
+    selectedEvent = EventService.GetEventById(EventId);
+
+    if (selectedEvent != null)
+    {
+      registrationCount = EventService.GetTotalAttendeesCount(EventId);
+      daysUntilEvent = (selectedEvent.Date.Date - DateTime.Now.Date).Days;
+
+      // Track that user viewed this event
+      SessionService.TrackEventView(EventId);
+    }
+  }
+
+  private void NavigateToEvents()
+  {
+    Navigation.NavigateTo("/events");
+  }
+
+  private void NavigateToRegistration()
+  {
+    Navigation.NavigateTo($"/events/{EventId}/register");
+  }
+}

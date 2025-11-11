@@ -1,0 +1,35 @@
+@page "/events"
+@inject EventService EventService
+@inject UserSessionService SessionService
+
+<PageTitle>Events</PageTitle>
+
+<div class="events-container">
+  <!-- Session Tracker -->
+  <SessionTracker />
+
+  <div class="events-header">
+    <h1>Upcoming Events</h1>
+    <p class="subtitle">Discover and join exciting events</p>
+  </div>
+
+  <div class="events-grid">
+    @foreach (var eventItem in events)
+    {
+      <EventCard EventData="eventItem" />
+    }
+  </div>
+</div>
+
+@code {
+  private List<Event> events = new();
+
+  protected override void OnInitialized()
+  {
+    // Get events from the EventService
+    events = EventService.GetUpcomingEvents();
+
+    // Track page view
+    SessionService.TrackPageView();
+  }
+}

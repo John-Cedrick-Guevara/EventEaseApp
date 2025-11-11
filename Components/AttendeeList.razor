@@ -1,0 +1,108 @@
+@inject EventService EventService
+
+<div class="attendee-list-container">
+    <div class="attendee-list-header">
+        <h3>👥 Event Participants</h3>
+        <div class="attendee-stats">
+            <span class="stat-badge">
+                <strong>@totalAttendees</strong> Total Attendees
+            </span>
+            <span class="stat-badge checked-in">
+                <strong>@checkedInCount</strong> Checked In
+            </span>
+        </div>
+    </div>
+
+    @if (!attendees.Any())
+    {
+        <div class="no-attendees">
+            <p>🎟️ No registrations yet. Be the first to register!</p>
+        </div>
+    }
+    else
+    {
+        <div class="attendee-grid">
+            @foreach (var attendee in attendees)
+            {
+                <div class="attendee-card @(attendee.CheckedIn ? "checked-in" : "")">
+                    <div class="attendee-avatar">
+                        <span>@attendee.Initials</span>
+                        @if (attendee.CheckedIn)
+                        {
+                            <span class="check-badge">✓</span>
+                        }
+                    </div>
+                    <div class="attendee-info">
+                        <div class="attendee-name">@attendee.FullName</div>
+                        <div class="attendee-email">@attendee.Email</div>
+                        <div class="attendee-details">
+                            <span class="detail-badge">
+                                👤 @attendee.NumberOfAttendees @(attendee.NumberOfAttendees > 1 ? "guests" : "guest")
+                            </span>
+                            <span class="detail-badge">
+                                📅 @attendee.RegistrationDate.ToString("MMM dd, yyyy")
+                            </span>
+                        </div>
+                        @if (attendee.CheckedIn && attendee.CheckInTime.HasValue)
+                        {
+                            <div class="check-in-time">
+                                ✓ Checked in at @attendee.CheckInTime.Value.ToString("hh:mm tt")
+                            </div>
+                        }
+                    </div>
+                    @if (!attendee.CheckedIn && ShowCheckInButton)
+                    {
+                        <button class="btn-check-in" @onclick="() => CheckInAttendee(attendee.Id)">
+                            Check In
+                        </button>
+                    }
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public int EventId { get; set; }
+
+    [Parameter]
+    public bool ShowCheckInButton { get; set; } = false;
+
+    private List<AttendeeInfo> attendees = new();
+    private int totalAttendees = 0;
+    private int checkedInCount = 0;
+
+    protected override void OnInitialized()
+    {
+        LoadAttendees();
+    }
+
+    protected override void OnParametersSet()
+    {
+        LoadAttendees();
+    }
+
+    private void LoadAttendees()
+    {
+        attendees = EventService.GetAttendeesByEvent(EventId);
+        totalAttendees = EventService.GetTotalAttendeesCount(EventId);
+        checkedInCount = EventService.GetCheckedInCount(EventId);
+    }
+
+    private void CheckInAttendee(int attendeeId)
+    {
+        var success = EventService.CheckInAttendee(attendeeId);
+        if (success)
+        {
+            LoadAttendees();
+            StateHasChanged();
+        }
+    }
+
+    public void Refresh()
+    {
+        LoadAttendees();
+        StateHasChanged();
+    }
+}

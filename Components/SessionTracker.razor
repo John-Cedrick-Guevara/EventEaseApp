@@ -1,0 +1,41 @@
+@inject UserSessionService SessionService
+@implements IDisposable
+
+<div class="session-tracker">
+  <div class="session-info">
+    <span class="session-label">Session Stats:</span>
+    <span class="session-data">@sessionStats</span>
+  </div>
+  @if (!string.IsNullOrEmpty(SessionService.CurrentSession.UserName))
+  {
+    <div class="user-info">
+      <span class="user-badge">👤 @SessionService.CurrentSession.UserName</span>
+    </div>
+  }
+</div>
+
+@code {
+  private string sessionStats = string.Empty;
+
+  protected override void OnInitialized()
+  {
+    UpdateStats();
+    SessionService.OnSessionChanged += OnSessionChanged;
+  }
+
+  private void OnSessionChanged()
+  {
+    UpdateStats();
+    InvokeAsync(StateHasChanged);
+  }
+
+  private void UpdateStats()
+  {
+    sessionStats = SessionService.GetSessionStats();
+  }
+
+  public void Dispose()
+  {
+    SessionService.OnSessionChanged -= OnSessionChanged;
+  }
+}

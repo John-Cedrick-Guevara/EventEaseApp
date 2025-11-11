@@ -1,0 +1,182 @@
+@page "/events/{EventId:int}/register"
+@inject EventService EventService
+@inject UserSessionService SessionService
+@inject NavigationManager Navigation
+
+<PageTitle>Register - @(selectedEvent?.Name ?? "Event")</PageTitle>
+
+<div class="registration-container">
+    @if (selectedEvent == null)
+    {
+        <div class="not-found">
+            <h2>Event Not Found</h2>
+            <p>The event you're trying to register for doesn't exist.</p>
+            <button class="btn btn-primary" @onclick="NavigateToEvents">Back to Events</button>
+        </div>
+    }
+    else if (isSubmitted)
+    {
+        <div class="success-message">
+            <div class="success-icon">✓</div>
+            <h2>Registration Successful!</h2>
+            <p>Thank you for registering, <strong>@registration.FullName</strong>!</p>
+            <p>You're all set for <strong>@selectedEvent.Name</strong></p>
+            <p class="confirmation-details">
+                A confirmation email has been sent to <strong>@registration.Email</strong>
+            </p>
+            <div class="success-actions">
+                <button class="btn btn-primary" @onclick="NavigateToEventDetails">View Event Details</button>
+                <button class="btn btn-secondary" @onclick="NavigateToEvents">Browse More Events</button>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="registration-card">
+            <div class="registration-header">
+                <button class="btn-back" @onclick="NavigateToEventDetails">
+                    <span>←</span> Back to Event
+                </button>
+                <h1>Event Registration</h1>
+                <div class="event-info">
+                    <h2>@selectedEvent.Name</h2>
+                    <p>📅 @selectedEvent.Date.ToString("MMMM dd, yyyy") at @selectedEvent.Date.ToString("hh:mm tt")</p>
+                    <p>📍 @selectedEvent.Location</p>
+                </div>
+            </div>
+
+            <div class="registration-form">
+                <EditForm Model="@registration" OnValidSubmit="HandleValidSubmit">
+                    <DataAnnotationsValidator />
+                    <ValidationSummary class="validation-summary" />
+
+                    <div class="form-section">
+                        <h3>Your Information</h3>
+                        
+                        <div class="form-group">
+                            <label for="fullName">Full Name *</label>
+                            <InputText id="fullName" 
+                                       class="form-control" 
+                                       @bind-Value="registration.FullName" 
+                                       placeholder="Enter your full name" />
+                            <ValidationMessage For="@(() => registration.FullName)" />
+                        </div>
+
+                        <div class="form-group">
+                            <label for="email">Email Address *</label>
+                            <InputText id="email" 
+                                       type="email"
+                                       class="form-control" 
+                                       @bind-Value="registration.Email" 
+                                       placeholder="your.email@example.com" />
+                            <ValidationMessage For="@(() => registration.Email)" />
+                        </div>
+
+                        <div class="form-group">
+                            <label for="phone">Phone Number *</label>
+                            <InputText id="phone" 
+                                       type="tel"
+                                       class="form-control" 
+                                       @bind-Value="registration.Phone" 
+                                       placeholder="(555) 123-4567" />
+                            <ValidationMessage For="@(() => registration.Phone)" />
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3>Event Details</h3>
+                        
+                        <div class="form-group">
+                            <label for="attendees">Number of Attendees *</label>
+                            <InputNumber id="attendees" 
+                                         class="form-control" 
+                                         @bind-Value="registration.NumberOfAttendees" 
+                                         min="1" 
+                                         max="10" />
+                            <ValidationMessage For="@(() => registration.NumberOfAttendees)" />
+                            <small class="form-text">Maximum 10 attendees per registration</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="requests">Special Requests (Optional)</label>
+                            <InputTextArea id="requests" 
+                                           class="form-control" 
+                                           @bind-Value="registration.SpecialRequests" 
+                                           rows="4"
+                                           placeholder="Dietary restrictions, accessibility needs, etc." />
+                            <ValidationMessage For="@(() => registration.SpecialRequests)" />
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            Complete Registration
+                        </button>
+                        <button type="button" class="btn btn-secondary" @onclick="NavigateToEventDetails">
+                            Cancel
+                        </button>
+                    </div>
+                </EditForm>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public int EventId { get; set; }
+
+    private Event? selectedEvent;
+    private EventRegistration registration = new();
+    private bool isSubmitted = false;
+
+    protected override void OnInitialized()
+    {
+        selectedEvent = EventService.GetEventById(EventId);
+        
+        if (selectedEvent != null)
+        {
+            registration.EventId = EventId;
+        }
+
+        // Track page view
+        SessionService.TrackPageView();
+    }
+
+    private void HandleValidSubmit()
+    {
+        var success = EventService.RegisterForEvent(registration);
+        
+        if (success)
+        {
+            // Create attendee record for tracking
+            var attendee = new AttendeeInfo
+            {
+                EventId = EventId,
+                FullName = registration.FullName,
+                Email = registration.Email,
+                Phone = registration.Phone,
+                NumberOfAttendees = registration.NumberOfAttendees,
+                SessionId = SessionService.CurrentSession.SessionId
+            };
+
+            EventService.AddAttendee(attendee);
+
+            // Update user session
+            SessionService.SetUserInfo(registration.FullName, registration.Email);
+            SessionService.RegisterForEvent(EventId);
+
+            isSubmitted = true;
+        }
+    }
+
+    private void NavigateToEvents()
+    {
+        Navigation.NavigateTo("/events");
+    }
+
+    private void NavigateToEventDetails()
+    {
+        Navigation.NavigateTo($"/events/{EventId}");
+    }
+}
